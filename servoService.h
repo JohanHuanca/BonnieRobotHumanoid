@@ -1,16 +1,9 @@
-#include "publicService.h"
 #include "ServoResource.h"
-#include "Vector.h"
+#include <vector>
 
-Vector<ServoResource> servoData;
+std::vector<ServoResource> servoData;
 
-void addCorsHeaders(AsyncWebServerResponse *response) {
-  response->addHeader("Access-Control-Allow-Origin", "*");
-  response->addHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
-  response->addHeader("Access-Control-Allow-Headers", "Content-Type");
-}
-
-void getAll(AsyncWebServerRequest *request)
+void getAllServos(AsyncWebServerRequest *request)
 {
   StaticJsonDocument<1024> doc;
   JsonArray array = doc.to<JsonArray>();
@@ -28,7 +21,7 @@ void getAll(AsyncWebServerRequest *request)
   addCorsHeaders(response);
   request->send(response);
 }
-void getById(AsyncWebServerRequest *request)
+void getServoById(AsyncWebServerRequest *request)
 {
   int id = GetIdFromURL(request, "/servos/");
 
@@ -50,17 +43,17 @@ void getById(AsyncWebServerRequest *request)
   request->send(response);
 }
 
-void getRequest(AsyncWebServerRequest *request) {
+void getServo(AsyncWebServerRequest *request) {
   
   if(request->url().indexOf("/servos/") != -1)
   {
-    getById(request);
+    getServoById(request);
   }
   else {
-    getAll(request);
+    getAllServos(request);
   }
 }
-void postRequest(AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total)
+void createServo(AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total)
 { 
   String bodyContent = GetBodyContent(data, len);
   
@@ -80,12 +73,14 @@ void postRequest(AsyncWebServerRequest * request, uint8_t *data, size_t len, siz
   request->send(response);
 }
 
-void putRequest(AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total)
+void updateServo(AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total)
 {
   int id = GetIdFromURL(request, "/servos/");
   String bodyContent = GetBodyContent(data, len);
    
   StaticJsonDocument<200> doc;
+  StaticJsonDocument<200> outputDoc;
+
   DeserializationError error = deserializeJson(doc, bodyContent);
   if (error) { request->send(400); return;}
 
@@ -94,23 +89,26 @@ void putRequest(AsyncWebServerRequest * request, uint8_t *data, size_t len, size
   for (ServoResource& servoResource : servoData) {
     if (servoResource.id == id) {
       servoResource.angle = angle;
+
+      outputDoc["id"] = servoResource.id;
+      outputDoc["angle"] = servoResource.angle;
       break;
     }
   }
-  
-  String message = "Replace servo with id " + String(id) + " with angle " + String(angle);
-  Serial.println(message);
-  AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", message);
+  String message;
+  serializeJson(outputDoc, message);
+
+  AsyncWebServerResponse *response = request->beginResponse(200, "application/json", message);
   addCorsHeaders(response);
   request->send(response);
 }
 
-void deleteRequest(AsyncWebServerRequest *request) {
+void deleteServo(AsyncWebServerRequest *request) {
   int id = GetIdFromURL(request, "/servos/");
 
-  for (int i = 0; i < servoData.size(); i++) {
-    if (servoData[i].id == id) {
-      servoData.remove(i);
+  for (auto it = servoData.begin(); it != servoData.end(); ++it) {
+    if (it->id == id) {
+      servoData.erase(it);
       break;
     }
   }
@@ -121,3 +119,4 @@ void deleteRequest(AsyncWebServerRequest *request) {
   addCorsHeaders(response);
   request->send(response);
 }
+

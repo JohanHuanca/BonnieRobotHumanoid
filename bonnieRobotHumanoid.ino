@@ -4,10 +4,12 @@
 #include <FS.h>
 #include <ArduinoJson.h>
 
-#include "config.h"  // Sustituir con datos de vuestra red
-#include "servoService.h"
-#include "servoController.h"
-#include "connectWifi.h"
+#include "Config.h"  // Sustituir con datos de vuestra red
+#include "PublicService.h"
+#include "ServoService.h"
+#include "ButtonService.h"
+#include "Controller.h"
+#include "ConnectWifi.h"
 
 Bonnie bonnie;
 
@@ -19,21 +21,37 @@ void setup() {
   bonnie.initialPosition();
   delay(2000);
   while(true){
-    bonnie.chakiraDance(3,600);
-    bonnie.noodleDance(3,800);
-  }
+    bonnie.forward(1,600);
+    //bonnie.chakiraDance(3,600);
+    //bonnie.noodleDance(3,800);
+  }  
   //bonnie.forward(40,800);
   //bonnie.handsUp(5,600);
   //bonnie.sayHi(2,1400); 
   //conectarse al wifi y iniciar un servidor ApiRest local
-  connectWiFi_AP();
+  connectWiFi_STA();
   initServoData();
+  initButtonData();
   initServer();
 }
 
 void loop() {
   updateServoAngles(1000);
-  delay(500);
+  //delay(500);
+  //checkButtonStates();
+}
+void checkButtonStates(){
+  if(buttonData[0].state) { // Suponiendo que buttonData[0] corresponde al botón 1
+      bonnie.chakiraDance(5,600);
+    }
+  else if(buttonData[1].state) { // Suponiendo que buttonData[1] corresponde al botón 2
+      bonnie.noodleDance(5,800);
+  }
+}
+void initButtonData(){
+  for(int i=0; i < 6; i++){
+    buttonData.push_back(ButtonResource(i+1,false)); 
+  }
 }
 void initServoData(){
   for(int i=0; i < 18; i++){

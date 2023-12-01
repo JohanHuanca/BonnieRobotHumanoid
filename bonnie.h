@@ -14,6 +14,8 @@ class Bonnie
     void initBonnie();
     void initialPosition();
     void moveServo(int time, int  servoTarget[]);
+    float lerp(float start, float end, float progress);
+    void updateServo(int index, float position);
 
     void sayHi(int count = 1, int speed = 1000);
     void handsUp(int count = 1, int speed = 1000);

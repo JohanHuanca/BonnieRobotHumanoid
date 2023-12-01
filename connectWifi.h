@@ -1,4 +1,4 @@
-void connectWiFi_STA(bool useStaticIP = false)
+void connectWiFi_STA(bool useStaticIP = true)
 {
    Serial.println("");
    WiFi.mode(WIFI_STA);
@@ -17,7 +17,7 @@ void connectWiFi_STA(bool useStaticIP = false)
    Serial.println(WiFi.localIP());
 }
 
-void connectWiFi_AP(bool useStaticIP = false)
+void connectWiFi_AP(bool useStaticIP = true)
 { 
    Serial.println("");
    WiFi.mode(WIFI_AP);
