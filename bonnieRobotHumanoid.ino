@@ -12,44 +12,48 @@
 #include "ConnectWifi.h"
 
 Bonnie bonnie;
+bool firstMove=true;
 
 void setup() {
   Serial.begin(9600);
   Serial.println("Bonnie robot test!");
   
   bonnie.initBonnie();
-  bonnie.initialPosition();
+  bonnie.initialPosition(1000);
   delay(2000);
-  while(true){
-    bonnie.forward(1,600);
-    //bonnie.chakiraDance(3,600);
-    //bonnie.noodleDance(3,800);
-  }  
-  //bonnie.forward(40,800);
-  //bonnie.handsUp(5,600);
-  //bonnie.sayHi(2,1400); 
-  //conectarse al wifi y iniciar un servidor ApiRest local
-  connectWiFi_STA();
+
+  connectWiFi_AP();
   initServoData();
   initButtonData();
   initServer();
 }
 
 void loop() {
-  updateServoAngles(1000);
-  //delay(500);
-  //checkButtonStates();
+  //updateServoAngles(1000);
+  checkButtonStates();
 }
 void checkButtonStates(){
   if(buttonData[0].state) { // Suponiendo que buttonData[0] corresponde al botón 1
-      bonnie.chakiraDance(5,600);
+    bonnie.forward(1,400);
+  }else if (buttonData[1].state){
+    bonnie.turnLeft(1,400);
+  }else if (buttonData[2].state){
+    bonnie.turnRight(1,400);
+  }else if (buttonData[6].state){
+    bonnie.sayHi(1,800);
+  }else if (buttonData[7].state){
+    if(firstMove){
+      bonnie.handUp(1,800);
+      firstMove=false;
     }
-  else if(buttonData[1].state) { // Suponiendo que buttonData[1] corresponde al botón 2
-      bonnie.noodleDance(5,800);
+    bonnie.handUpWaving(1,800);
+  }else{
+    bonnie.initialPosition(500);
+    firstMove=true;
   }
 }
 void initButtonData(){
-  for(int i=0; i < 6; i++){
+  for(int i=0; i < 10; i++){
     buttonData.push_back(ButtonResource(i+1,false)); 
   }
 }

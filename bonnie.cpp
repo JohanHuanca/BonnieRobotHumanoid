@@ -38,35 +38,43 @@ void Bonnie::initBonnie() {
   }
   servos.begin(); 
   servos.setPWMFreq(50); //Frecuecia PWM de 50Hz o T=16,66ms
-}
 
-void Bonnie::initialPosition() {
-  // degreeArray[16] = {tobilloInferior_1,tobilloInferior_2,tobilloSuperior_1,tobilloSuperior_2,rodilla_1,rodilla_2...};
-  int degreeArray[18] = {84, 86, 32, 112, 95, 92, 100, 96, 172, 58, 90, 88, 100, 8, 176, 90, 150, 0};
+  int degreeArray[18] = {84, 85, 32, 112, 95, 92, 100, 102, 176, 58, 90, 86, 100, 8, 176, 90, 150, 0};
   for (int i = 0; i < 18; i++) {
     servoPosition[i] = degreeArray[i];
   }
-  moveServo(1000, degreeArray);
+}
+
+void Bonnie::initialPosition(int speed) {
+  // degreeArray[16] = {tobilloInferior_1,tobilloInferior_2,tobilloSuperior_1,tobilloSuperior_2,rodilla_1,rodilla_2...};
+  int degreeArray[18] = {84, 85, 32, 112, 95, 92, 100, 102, 176, 58, 90, 86, 100, 8, 176, 90, 150, 0};
+  moveServo(speed, degreeArray);
 }
 void Bonnie::moveServo(int time, int servoTarget[]) {
+  static unsigned long lastUpdateTime = 0; // Tiempo de la última actualización
   if (time > 10) {
-    int startTime = millis();
-    int endTime = startTime + time;
+    unsigned long startTime = millis();
+    unsigned long endTime = startTime + time;
+
     while (millis() < endTime) {
-      int elapsedTime = millis() - startTime;
-      for (int i = 0; i < 18; i++) {
-        float progress = (float)elapsedTime / time;
-        float newPos = lerp(servoPosition[i], servoTarget[i], progress);
-        updateServo(i, newPos);
+      if (millis() - lastUpdateTime > 10) { // Solo actualiza si han pasado más de 10 ms
+        lastUpdateTime = millis(); // Actualiza el tiempo de la última actualización
+        int elapsedTime = millis() - startTime;
+        for (int i = 0; i < 18; i++) {
+          float progress = (float)elapsedTime / time;
+          float newPos = lerp(servoPosition[i], servoTarget[i], progress);
+          updateServo(i, newPos);
+        }
       }
-      delay(10); // Mejor si se reemplaza con una estrategia no bloqueante
+      // Aquí se pueden realizar otras tareas mientras los servos se están moviendo
     }
   } else {
     for (int i = 0; i < 18; i++) {
       updateServo(i, servoTarget[i]);
     }
   }
-  memcpy(servoPosition, servoTarget, sizeof(servoPosition)); // Actualiza todas las posiciones de una vez
+  // Actualiza la posición actual de los servos
+  memcpy(servoPosition, servoTarget, sizeof(servoPosition));
 }
 
 // Función de interpolación lineal
@@ -84,7 +92,8 @@ void Bonnie::updateServo(int index, float position) {
   }
 }
 void Bonnie::forward(int steps, int speed){
-  int degree[18] = {84, 86, 32, 112, 95, 92, 100, 96, 172, 58, 90, 88, 100, 8, 176, 90, 150, 0};
+  //int degreeArray[18] = {degree[0]+0, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+0, degree[5]+0, degree[6]+0, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+0, degree[11]+0, degree[12]+0, degree[13]+0, degree[14]+0, degree[15]+0, degree[16]+0, degree[17]+0};
+  int degree[18] = {84, 85, 32, 112, 95, 92, 100, 102, 176, 58, 90, 86, 100, 8, 176, 90, 150, 0};
   int hips=10;//angulo cadera de inclinacion de las caderas
   int hips2=0;//recompensacion cadera para levantar el otro pie
   int hips3=20;//paso para atras al caminar
@@ -104,33 +113,84 @@ void Bonnie::forward(int steps, int speed){
     moveServo(speed, degreeArray6);
   } 
 }
-void Bonnie::sayHi(int counts, int speed){
-  for (int i = 1; i <= counts; i++) {  
-    int degreeArray1[18] = {97, 100, 36, 112, 95, 92, 98, 92, 160, 65, 90, 88, 100, 15, 165, 90, 90, 90};
-    int degreeArray2[18] = {97, 100, 36, 82, 95, 92, 98, 92, 160, 95, 90, 88, 100, 15, 75, 90, 90, 90};
-    int degreeArray3[18] = {97, 100, 36, 82, 95, 92, 98, 92, 160, 95, 90, 88, 170, 0, 75, 90, 90, 90};
-    int degreeArray4[18] = {97, 100, 36, 82, 95, 92, 98, 92, 160, 95, 90, 88, 100, 15, 75, 90, 90, 90};
+void Bonnie::turnLeft(int steps, int speed){
+  int degree[18] = {84, 85, 32, 112, 95, 92, 100, 102, 176, 58, 90, 86, 100, 8, 176, 90, 150, 0};
+  int hips=10;//angulo cadera
+  int hips2=0;//recompensacion cadera
+  int giro=30;
+  int hips4=10;//paso de la pierna para adelante al girar
+  for (int i = 0; i < steps; i++) {  
+    int degreeArray1[18] = {degree[0]-hips, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]-hips, degree[5]+0, degree[6]-hips, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]-hips, degree[11]+0, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+    int degreeArray2[18] = {degree[0]-hips, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+hips2, degree[5]+0, degree[6]-hips, degree[7]-hips4, degree[8]-(hips4*2), degree[9]+hips4, degree[10]-hips, degree[11]+0, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+    int degreeArray3[18] = {degree[0]-hips, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+hips2, degree[5]+giro, degree[6]-hips, degree[7]-hips4, degree[8]-(hips4*2), degree[9]+hips4, degree[10]-hips, degree[11]+0, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+    int degreeArray4[18] = {degree[0]-hips, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]-hips, degree[5]+giro, degree[6]-hips, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]-hips, degree[11]+0, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};//hasta aqui gira la pierna izquierda
+    int degreeArray5[18] = {degree[0]+hips, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+hips, degree[5]+giro, degree[6]+hips, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+hips, degree[11]+0, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+    int degreeArray6[18] = {degree[0]+hips, degree[1]+hips4, degree[2]+(hips4*2), degree[3]-hips4, degree[4]+hips, degree[5]+giro, degree[6]+hips, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+hips2, degree[11]+0, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+    int degreeArray7[18] = {degree[0]+hips, degree[1]+hips4, degree[2]+(hips4*2), degree[3]-hips4, degree[4]+hips, degree[5]+0, degree[6]+hips, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+hips2, degree[11]+0, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+    int degreeArray8[18] = {degree[0]+hips, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+hips, degree[5]+0, degree[6]+hips, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+hips, degree[11]+0, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};//hasta aqui el robot giro 30 grados para la izquieda
+
     moveServo(speed, degreeArray1);
     moveServo(speed, degreeArray2);
-    moveServo(speed/2, degreeArray3);
+    moveServo(speed, degreeArray3);
     moveServo(speed, degreeArray4);
-  }
-  int degreeArray5[18] = {97, 100, 36, 112, 95, 92, 98, 92, 160, 65, 90, 88, 100, 15, 165, 90, 90, 90};
-  moveServo(speed, degreeArray5);
+    moveServo(speed, degreeArray5);
+    moveServo(speed, degreeArray6);
+    moveServo(speed, degreeArray7);
+    moveServo(speed, degreeArray8);
+  } 
 }
-void Bonnie::handsUp(int counts, int speed){
-  int degreeArray1[18] = {97, 100, 36, 112, 95, 92, 98, 92, 160, 65, 90, 88, 100, 15, 165, 90, 90, 90};
-  int degreeArray2[18] = {97, 100, 36, 112, 95, 92, 98, 92, 160, 65, 90, 88, 100, 15, 0, 90, 90, 90};
-  moveServo(speed, degreeArray1);
-  moveServo(speed, degreeArray2);
+void Bonnie::turnRight(int steps, int speed) {
+  int degree[18] = {84, 85, 32, 112, 95, 92, 100, 102, 176, 58, 90, 86, 100, 8, 176, 90, 150, 0};
+  int hips=10;//angulo cadera
+  int hips2=0;//recompensacion cadera
+  int giro=30;
+  int hips4=10;//paso de la pierna para adelante al girar
+  for (int i = 0; i < steps; i++) {
+    int degreeArray1[18] = {degree[0]+hips, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+hips, degree[5]+0, degree[6]+hips, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+hips, degree[11]+0, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+    int degreeArray2[18] = {degree[0]+hips, degree[1]+hips4, degree[2]+(hips4*2), degree[3]-hips4, degree[4]+hips, degree[5]+0, degree[6]+hips, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+hips2, degree[11]+0, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+    int degreeArray3[18] = {degree[0]+hips, degree[1]+hips4, degree[2]+(hips4*2), degree[3]-hips4, degree[4]+hips, degree[5]+0, degree[6]+hips, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+hips2, degree[11]-giro, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+    int degreeArray4[18] = {degree[0]+hips, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+hips, degree[5]+0, degree[6]+hips, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+hips, degree[11]-giro, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+    int degreeArray5[18] = {degree[0]-hips, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]-hips, degree[5]+0, degree[6]-hips, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]-hips, degree[11]-giro, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+    int degreeArray6[18] = {degree[0]-hips, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+hips2, degree[5]+0, degree[6]-hips, degree[7]-hips4, degree[8]-(hips4*2), degree[9]+hips4, degree[10]-hips, degree[11]-giro, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};    
+    int degreeArray7[18] = {degree[0]-hips, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+hips2, degree[5]+0, degree[6]-hips, degree[7]-hips4, degree[8]-(hips4*2), degree[9]+hips4, degree[10]-hips, degree[11]+0, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+    int degreeArray8[18] = {degree[0]-hips, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]-hips, degree[5]+0, degree[6]-hips, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]-hips, degree[11]+0, degree[12]+0, degree[13]+15, degree[14]+0, degree[15]+0, degree[16]-15, degree[17]+0};
+
+    moveServo(speed, degreeArray1);
+    moveServo(speed, degreeArray2);
+    moveServo(speed, degreeArray3);
+    moveServo(speed, degreeArray4);
+    moveServo(speed, degreeArray5);
+    moveServo(speed, degreeArray6);
+    moveServo(speed, degreeArray7);
+    moveServo(speed, degreeArray8);
+  }
+}
+void Bonnie::sayHi(int counts, int speed){
+  int degree[18] = {84, 85, 32, 112, 95, 92, 100, 102, 176, 58, 90, 86, 100, 8, 176, 90, 150, 0};
   for (int i = 1; i <= counts; i++) {  
-    int degreeArray3[18] = {97, 100, 36, 112, 95, 92, 98, 92, 160, 65, 90, 88, 140, 0, 0, 90, 90, 90};
-    int degreeArray4[18] = {97, 100, 36, 112, 95, 92, 98, 92, 160, 65, 90, 88, 100, 60, 0, 90, 90, 90};
+    int degreeArray1[18] = {degree[0]+0, degree[1]+0, degree[2]+0, degree[3]-30, degree[4]+0, degree[5]+0, degree[6]+0, degree[7]+0, degree[8]+0, degree[9]+30, degree[10]+0, degree[11]+0, degree[12]+0, degree[13]+30, degree[14]-60, degree[15]+0, degree[16]-90, degree[17]+0};
+    int degreeArray2[18] = {degree[0]+0, degree[1]+0, degree[2]+0, degree[3]-30, degree[4]+0, degree[5]+0, degree[6]+0, degree[7]+0, degree[8]+0, degree[9]+30, degree[10]+0, degree[11]+0, degree[12]+60, degree[13]+0, degree[14]-60, degree[15]+0, degree[16]-90, degree[17]+0};
+    int degreeArray3[18] = {degree[0]+0, degree[1]+0, degree[2]+0, degree[3]-30, degree[4]+0, degree[5]+0, degree[6]+0, degree[7]+0, degree[8]+0, degree[9]+30, degree[10]+0, degree[11]+0, degree[12]+0, degree[13]+30, degree[14]-60, degree[15]+0, degree[16]-90, degree[17]+0};
+    int degreeArray4[18] = {degree[0]+0, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+0, degree[5]+0, degree[6]+0, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+0, degree[11]+0, degree[12]+0, degree[13]+0, degree[14]+0, degree[15]+0, degree[16]+0, degree[17]+0};
+    moveServo(speed, degreeArray1);
+    moveServo(speed, degreeArray2);
     moveServo(speed, degreeArray3);
     moveServo(speed, degreeArray4);
   }
-  int degreeArray5[18] = {97, 100, 36, 112, 95, 92, 98, 92, 160, 65, 90, 88, 100, 15, 165, 90, 90, 90};
-  moveServo(speed, degreeArray5);
+}
+void Bonnie::handUp(int counts, int speed){
+  int degree[18] = {84, 85, 32, 112, 95, 92, 100, 102, 176, 58, 90, 86, 100, 8, 176, 90, 150, 0};
+  int degreeArray1[18] = {degree[0]+0, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+0, degree[5]+0, degree[6]+0, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+0, degree[11]+0, degree[12]+0, degree[13]+0, degree[14]-160, degree[15]+0, degree[16]+0, degree[17]+0};
+  moveServo(speed, degreeArray1);
+}
+void Bonnie::handUpWaving(int counts, int speed){
+  int degree[18] = {84, 85, 32, 112, 95, 92, 100, 102, 176, 58, 90, 86, 100, 8, 176, 90, 150, 0};
+  for (int i = 1; i <= counts; i++) {  
+    int degreeArray2[18] = {degree[0]+0, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+0, degree[5]+0, degree[6]+0, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+0, degree[11]+0, degree[12]+45, degree[13]+0, degree[14]-160, degree[15]+0, degree[16]+0, degree[17]+0};
+    int degreeArray3[18] = {degree[0]+0, degree[1]+0, degree[2]+0, degree[3]+0, degree[4]+0, degree[5]+0, degree[6]+0, degree[7]+0, degree[8]+0, degree[9]+0, degree[10]+0, degree[11]+0, degree[12]+0, degree[13]+45, degree[14]-160, degree[15]+0, degree[16]+0, degree[17]+0};
+    moveServo(speed, degreeArray2);
+    moveServo(speed, degreeArray3);
+  }
 }
 void Bonnie::noodleDance(int counts, int speed){
   int degreeArray1[18] = {90, 94, 36, 112, 95, 92, 98, 92, 160, 65, 90, 88, 100, 15, 165, 90, 150, 0};
